@@ -90,7 +90,7 @@
 /* HERO */
 .hero-media{
   border-radius:14px;
-  min-height:540px;
+  min-height:500px;
   background-size:cover;
   background-position:center;
   position:relative;
@@ -115,6 +115,7 @@
 }
 .hero-side-thumb{
   width:120px;
+  min-width: 110px;
   min-height:86px;
   background-size:cover;
   background-position:center;
@@ -341,7 +342,43 @@
 
 
 
+.ticker-item {
+  flex: 1 1 160px;
+  justify-content: center;
+}
 
+.ticker-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #16a34a;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: .4; }
+  50% { opacity: 1; }
+  100% { opacity: .4; }
+}
+
+.ticker-label {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.ticker-value {
+  font-size: 13px;
+  color: #6b7280;
+
+}
+
+.cotacoes-titulo {
+  font-weight: 800;
+  font-size: 16px;
+  margin: 0;
+  color: #111827;
+  text-align: center;
+}
 
 @media (max-width: 1024px) {
   
