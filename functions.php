@@ -163,3 +163,323 @@ function antenatec_get_quotes() {
   set_transient($cache_key, $data, 10 * MINUTE_IN_SECONDS);
   return $data;
 }
+
+
+
+/**
+ * =========================
+ * ADSENSE – Configuração + Render
+ * =========================
+ */
+
+function antenatec_ads_defaults() {
+  return [
+    'adsense_client' => 'ca-pub-5434406728601594',
+
+    // Slots (preencha no admin depois)
+    'home_top_slot'     => '',
+    'home_middle_slot'  => '',
+    'home_sidebar_slot' => '',
+    'single_sidebar_slot' => '',
+    'single_bottom_slot'  => '',
+  ];
+}
+
+function antenatec_ads_get_option($key) {
+  $opts = get_option('antenatec_ads_options', []);
+  $defaults = antenatec_ads_defaults();
+  $opts = is_array($opts) ? array_merge($defaults, $opts) : $defaults;
+  return $opts[$key] ?? ($defaults[$key] ?? '');
+}
+
+/**
+ * Carrega o script do AdSense UMA vez (só no front).
+ * Só carrega se tiver client configurado.
+ */
+add_action('wp_head', function () {
+  if (is_admin()) return;
+
+  $client = antenatec_ads_get_option('adsense_client');
+  if (!$client) return;
+
+  echo '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='
+    . esc_attr($client)
+    . '" crossorigin="anonymous"></script>' . "\n";
+}, 5);
+
+/**
+ * Render de anúncio por posição.
+ * Ex.: antenatec_ad('home_top', ['format' => 'auto', 'responsive' => true]);
+ */
+function antenatec_ad($position, $args = []) {
+  $client = antenatec_ads_get_option('adsense_client');
+  if (!$client) return;
+
+  $map = [
+    'home_top'      => 'home_top_slot',
+    'home_middle'   => 'home_middle_slot',
+    'home_sidebar'  => 'home_sidebar_slot',
+    'single_sidebar'=> 'single_sidebar_slot',
+    'single_bottom' => 'single_bottom_slot',
+  ];
+
+  if (!isset($map[$position])) return;
+
+  $slot = antenatec_ads_get_option($map[$position]);
+  if (!$slot) {
+    // sem slot configurado => não renderiza nada
+    return;
+  }
+
+  $format = $args['format'] ?? 'auto';
+  $responsive = isset($args['responsive']) ? (bool)$args['responsive'] : true;
+
+  echo '<ins class="adsbygoogle" style="display:block"'
+    . ' data-ad-client="' . esc_attr($client) . '"'
+    . ' data-ad-slot="' . esc_attr($slot) . '"'
+    . ' data-ad-format="' . esc_attr($format) . '"'
+    . ($responsive ? ' data-full-width-responsive="true"' : '')
+    . '></ins>' . "\n";
+
+  echo '<script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>' . "\n";
+}
+
+/**
+ * Página de configurações no admin:
+ * Aparência > Antena Tec Ads
+ */
+add_action('admin_menu', function () {
+  add_theme_page(
+    'Antena Tec – Ads',
+    'Antena Tec Ads',
+    'manage_options',
+    'antenatec-ads',
+    'antenatec_ads_settings_page'
+  );
+});
+
+function antenatec_ads_settings_page() {
+  if (!current_user_can('manage_options')) return;
+
+  if (isset($_POST['antenatec_ads_save']) && check_admin_referer('antenatec_ads_save_nonce')) {
+    $defaults = antenatec_ads_defaults();
+    $new = [];
+
+    foreach ($defaults as $k => $v) {
+      $new[$k] = isset($_POST[$k]) ? sanitize_text_field($_POST[$k]) : $v;
+    }
+
+    update_option('antenatec_ads_options', $new);
+    echo '<div class="updated"><p>Configurações salvas.</p></div>';
+  }
+
+  $opts = get_option('antenatec_ads_options', []);
+  $opts = is_array($opts) ? array_merge(antenatec_ads_defaults(), $opts) : antenatec_ads_defaults();
+  ?>
+  <div class="wrap">
+    <h1>Antena Tec – Ads (AdSense)</h1>
+    <form method="post">
+      <?php wp_nonce_field('antenatec_ads_save_nonce'); ?>
+
+      <table class="form-table" role="presentation">
+        <tr>
+          <th scope="row"><label for="adsense_client">AdSense Client</label></th>
+          <td>
+            <input type="text" id="adsense_client" name="adsense_client" class="regular-text"
+              value="<?php echo esc_attr($opts['adsense_client']); ?>" placeholder="ca-pub-xxxxxxxxxxxxxxxx">
+          </td>
+        </tr>
+
+        <tr><th colspan="2"><h2>Home</h2></th></tr>
+
+        <tr>
+          <th scope="row"><label for="home_top_slot">Home – Topo (slot)</label></th>
+          <td><input type="text" id="home_top_slot" name="home_top_slot" class="regular-text"
+            value="<?php echo esc_attr($opts['home_top_slot']); ?>"></td>
+        </tr>
+
+        <tr>
+          <th scope="row"><label for="home_sidebar_slot">Home – Sidebar (slot)</label></th>
+          <td><input type="text" id="home_sidebar_slot" name="home_sidebar_slot" class="regular-text"
+            value="<?php echo esc_attr($opts['home_sidebar_slot']); ?>"></td>
+        </tr>
+
+        <tr>
+          <th scope="row"><label for="home_middle_slot">Home – Meio (slot)</label></th>
+          <td><input type="text" id="home_middle_slot" name="home_middle_slot" class="regular-text"
+            value="<?php echo esc_attr($opts['home_middle_slot']); ?>"></td>
+        </tr>
+
+        <tr><th colspan="2"><h2>Single</h2></th></tr>
+
+        <tr>
+          <th scope="row"><label for="single_sidebar_slot">Single – Sidebar (slot)</label></th>
+          <td><input type="text" id="single_sidebar_slot" name="single_sidebar_slot" class="regular-text"
+            value="<?php echo esc_attr($opts['single_sidebar_slot']); ?>"></td>
+        </tr>
+
+        <tr>
+          <th scope="row"><label for="single_bottom_slot">Single – Rodapé (slot)</label></th>
+          <td><input type="text" id="single_bottom_slot" name="single_bottom_slot" class="regular-text"
+            value="<?php echo esc_attr($opts['single_bottom_slot']); ?>"></td>
+        </tr>
+      </table>
+
+      <p class="submit">
+        <button type="submit" name="antenatec_ads_save" class="button button-primary">Salvar</button>
+      </p>
+    </form>
+
+    <p><strong>Como usar no tema:</strong> <code>&lt;?php antenatec_ad('home_top'); ?&gt;</code></p>
+  </div>
+  <?php
+}
+
+
+
+// <!-- ------------------------------------------------- -->
+
+/**
+ * CPT: Ofertas (Choice Day)
+ */
+add_action('init', function () {
+  register_post_type('ofertas', [
+    'labels' => [
+      'name'          => 'Ofertas',
+      'singular_name' => 'Oferta',
+      'add_new_item'  => 'Adicionar nova oferta',
+      'edit_item'     => 'Editar oferta',
+    ],
+    'public'       => true,
+    'has_archive'  => true,
+    'menu_icon'    => 'dashicons-tag',
+    'supports'     => ['title', 'thumbnail'],
+    'rewrite'      => ['slug' => 'ofertas'],
+    'show_in_rest' => true,
+  ]);
+});
+
+/**
+ * Metabox: dados da oferta
+ */
+add_action('add_meta_boxes', function () {
+  add_meta_box(
+    'antenatec_oferta_meta',
+    'Dados da Oferta',
+    'antenatec_oferta_meta_box',
+    'ofertas',
+    'normal',
+    'high'
+  );
+});
+
+function antenatec_oferta_meta_box($post) {
+  wp_nonce_field('antenatec_oferta_save', 'antenatec_oferta_nonce');
+
+  $url   = get_post_meta($post->ID, '_oferta_url', true);
+  $price = get_post_meta($post->ID, '_oferta_price', true);
+  $store = get_post_meta($post->ID, '_oferta_store', true);
+  $badge = get_post_meta($post->ID, '_oferta_badge', true);
+  $ship  = get_post_meta($post->ID, '_oferta_ship', true);
+  $choice= get_post_meta($post->ID, '_oferta_choice', true);
+
+  ?>
+  <table class="form-table" role="presentation">
+    <tr>
+      <th><label for="oferta_url">Link da oferta</label></th>
+      <td>
+        <input type="url" id="oferta_url" name="oferta_url" class="regular-text"
+          value="<?php echo esc_attr($url); ?>" placeholder="https://...">
+        <p class="description">Cole o link do Mercado Livre, Shopee, Amazon etc.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <th><label for="oferta_price">Preço</label></th>
+      <td>
+        <input type="text" id="oferta_price" name="oferta_price" class="regular-text"
+          value="<?php echo esc_attr($price); ?>" placeholder="R$ 199,90">
+      </td>
+    </tr>
+
+    <tr>
+      <th><label for="oferta_store">Loja</label></th>
+      <td>
+        <select id="oferta_store" name="oferta_store">
+          <?php
+          $stores = ['Mercado Livre','Amazon','Shopee','AliExpress','Magazine Luiza','Outro'];
+          foreach ($stores as $s) {
+            printf(
+              '<option value="%s" %s>%s</option>',
+              esc_attr($s),
+              selected($store, $s, false),
+              esc_html($s)
+            );
+          }
+          ?>
+        </select>
+      </td>
+    </tr>
+
+    <tr>
+      <th><label for="oferta_badge">Selo (opcional)</label></th>
+      <td>
+        <input type="text" id="oferta_badge" name="oferta_badge" class="regular-text"
+          value="<?php echo esc_attr($badge); ?>" placeholder="OFERTA / CUPOM / TOP / -30%">
+      </td>
+    </tr>
+
+    <tr>
+      <th><label for="oferta_ship">Texto menor (opcional)</label></th>
+      <td>
+        <input type="text" id="oferta_ship" name="oferta_ship" class="regular-text"
+          value="<?php echo esc_attr($ship); ?>" placeholder="frete grátis / entrega amanhã / cupom no carrinho">
+      </td>
+    </tr>
+
+    <tr>
+      <th>Choice Day</th>
+      <td>
+        <label>
+          <input type="checkbox" name="oferta_choice" value="1" <?php checked($choice, '1'); ?>>
+          Mostrar na seção “CHOICE DAY”
+        </label>
+      </td>
+    </tr>
+  </table>
+  <?php
+}
+
+/**
+ * Salvar metabox
+ */
+add_action('save_post_ofertas', function ($post_id) {
+  if (!isset($_POST['antenatec_oferta_nonce']) || !wp_verify_nonce($_POST['antenatec_oferta_nonce'], 'antenatec_oferta_save')) return;
+  if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+  if (!current_user_can('edit_post', $post_id)) return;
+
+  $url   = isset($_POST['oferta_url']) ? esc_url_raw($_POST['oferta_url']) : '';
+  $price = isset($_POST['oferta_price']) ? sanitize_text_field($_POST['oferta_price']) : '';
+  $store = isset($_POST['oferta_store']) ? sanitize_text_field($_POST['oferta_store']) : '';
+  $badge = isset($_POST['oferta_badge']) ? sanitize_text_field($_POST['oferta_badge']) : '';
+  $ship  = isset($_POST['oferta_ship']) ? sanitize_text_field($_POST['oferta_ship']) : '';
+  $choice= isset($_POST['oferta_choice']) ? '1' : '0';
+
+  update_post_meta($post_id, '_oferta_url', $url);
+  update_post_meta($post_id, '_oferta_price', $price);
+  update_post_meta($post_id, '_oferta_store', $store);
+  update_post_meta($post_id, '_oferta_badge', $badge);
+  update_post_meta($post_id, '_oferta_ship', $ship);
+  update_post_meta($post_id, '_oferta_choice', $choice);
+});
+
+/**
+ * Helper: obter imagem da oferta
+ */
+function antenatec_oferta_img($post_id, $fallback_url) {
+  if (has_post_thumbnail($post_id)) {
+    $url = get_the_post_thumbnail_url($post_id, 'medium');
+    if ($url) return $url;
+  }
+  return $fallback_url;
+}
