@@ -14,7 +14,7 @@
   $site_name  = get_bloginfo('name');
   $site_desc  = get_bloginfo('description');
   $site_url   = home_url('/');
-  $theme_img  = get_template_directory_uri() . '/assets/img/social-default.jpg';
+  $theme_img  = get_template_directory_uri() . '/assets/img/social-default.png';
 
   if (is_singular() && isset($post)) {
     setup_postdata($post);
