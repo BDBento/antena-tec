@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template: Front Page (Home)
  */
@@ -31,23 +32,23 @@ $antenatec_date_time = function () {
   <?php
   // 1 destaque grande (tag: destaque-principal)
   $hero_main = new WP_Query([
-  'post_type'           => 'post',
-  'posts_per_page'      => 1,
-  'ignore_sticky_posts' => true,
-  'tag'                 => 'destaque-principal',
-]);
-
-// 2) fallback para destaque
-if (!$hero_main->have_posts()) {
-  wp_reset_postdata();
-
-  $hero_main = new WP_Query([
     'post_type'           => 'post',
     'posts_per_page'      => 1,
     'ignore_sticky_posts' => true,
-    'tag'                 => 'destaque',
+    'tag'                 => 'destaque-principal',
   ]);
-}
+
+  // 2) fallback para destaque
+  if (!$hero_main->have_posts()) {
+    wp_reset_postdata();
+
+    $hero_main = new WP_Query([
+      'post_type'           => 'post',
+      'posts_per_page'      => 1,
+      'ignore_sticky_posts' => true,
+      'tag'                 => 'destaque',
+    ]);
+  }
 
   $main_id = (!empty($hero_main->posts) && isset($hero_main->posts[0]->ID))
     ? (int) $hero_main->posts[0]->ID
@@ -82,7 +83,8 @@ if (!$hero_main->have_posts()) {
                 </div>
               </div>
             </a>
-          <?php endif; wp_reset_postdata(); ?>
+          <?php endif;
+          wp_reset_postdata(); ?>
         </div>
 
         <!-- Laterais -->
@@ -99,7 +101,8 @@ if (!$hero_main->have_posts()) {
                   </div>
                 </a>
               <?php endwhile; ?>
-            <?php endif; wp_reset_postdata(); ?>
+            <?php endif;
+            wp_reset_postdata(); ?>
           </div>
         </div>
 
@@ -194,22 +197,33 @@ if (!$hero_main->have_posts()) {
             'post_type'           => 'post',
             'posts_per_page'      => 4,
             'ignore_sticky_posts' => true,
-            'offset'              => 4,
+            'post_status'         => 'publish',
+            'orderby'             => 'date',
+            'order'               => 'DESC',
+            'post__not_in'        => array_filter([$main_id]),
+            'date_query'          => [
+              [
+                'after'     => '7 days ago',
+                'inclusive' => true,
+              ],
+            ],
           ]);
           ?>
 
           <div class="weekly-list d-flex flex-column gap-3">
             <?php if ($weekly->have_posts()) : while ($weekly->have_posts()) : $weekly->the_post(); ?>
-              <article class="weekly-item d-flex gap-3">
-                <?php $img = $antenatec_get_img(get_the_ID(), 'medium'); ?>
-                <a class="weekly-thumb" href="<?php the_permalink(); ?>" style="background-image:url('<?php echo esc_url($img); ?>');"></a>
-                <div class="weekly-content">
-                  <h4 class="weekly-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h4>
-                  <p class="weekly-excerpt"><?php echo esc_html($antenatec_excerpt(get_the_ID(), 22)); ?></p>
-                  <div class="weekly-meta small"><?php echo esc_html($antenatec_date_time()); ?></div>
-                </div>
-              </article>
-            <?php endwhile; endif; wp_reset_postdata(); ?>
+                <article class="weekly-item d-flex gap-3">
+                  <?php $img = $antenatec_get_img(get_the_ID(), 'medium'); ?>
+                  <a class="weekly-thumb" href="<?php the_permalink(); ?>" style="background-image:url('<?php echo esc_url($img); ?>');"></a>
+                  <div class="weekly-content">
+                    <h4 class="weekly-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h4>
+                    <p class="weekly-excerpt"><?php echo esc_html($antenatec_excerpt(get_the_ID(), 22)); ?></p>
+                    <div class="weekly-meta small"><?php echo esc_html($antenatec_date_time()); ?></div>
+                  </div>
+                </article>
+            <?php endwhile;
+            endif;
+            wp_reset_postdata(); ?>
           </div>
         </div>
 
@@ -229,19 +243,29 @@ if (!$hero_main->have_posts()) {
                 'post_type'           => 'post',
                 'posts_per_page'      => 5,
                 'ignore_sticky_posts' => true,
+                'post_status'         => 'publish',
                 'orderby'             => 'date',
                 'order'               => 'DESC',
+                'post__not_in'        => array_filter([$main_id]),
+                'date_query'          => [
+                  [
+                    'after'     => '7 days ago',
+                    'inclusive' => true,
+                  ],
+                ],
               ]);
               ?>
 
               <div class="trending-list d-flex flex-column gap-2">
                 <?php if ($trending->have_posts()) : while ($trending->have_posts()) : $trending->the_post(); ?>
-                  <?php $timg = $antenatec_get_img(get_the_ID(), 'thumbnail'); ?>
-                  <a class="trending-item d-flex gap-2 text-decoration-none" href="<?php the_permalink(); ?>">
-                    <span class="trending-thumb" style="background-image:url('<?php echo esc_url($timg); ?>');"></span>
-                    <span class="trending-title"><?php the_title(); ?></span>
-                  </a>
-                <?php endwhile; endif; wp_reset_postdata(); ?>
+                    <?php $timg = $antenatec_get_img(get_the_ID(), 'thumbnail'); ?>
+                    <a class="trending-item d-flex gap-2 text-decoration-none" href="<?php the_permalink(); ?>">
+                      <span class="trending-thumb" style="background-image:url('<?php echo esc_url($timg); ?>');"></span>
+                      <span class="trending-title"><?php the_title(); ?></span>
+                    </a>
+                <?php endwhile;
+                endif;
+                wp_reset_postdata(); ?>
               </div>
             </div>
 
@@ -265,7 +289,7 @@ if (!$hero_main->have_posts()) {
   <section class="home-choice py-4">
     <div class="container">
       <div class="section-head mb-3">
-        <h3 class="section-title m-0">CHOICE DAY</h3>
+        <h3 class="section-title m-0">Promoçoes do dia</h3>
       </div>
 
       <?php
@@ -282,111 +306,125 @@ if (!$hero_main->have_posts()) {
 
       <div class="row g-3">
         <?php if ($choice->have_posts()) : while ($choice->have_posts()) : $choice->the_post(); ?>
-          <?php
-          $id    = get_the_ID();
-          $url   = get_post_meta($id, '_oferta_url', true);
-          $price = get_post_meta($id, '_oferta_price', true);
-          $store = get_post_meta($id, '_oferta_store', true);
-          $badge = get_post_meta($id, '_oferta_badge', true);
-          $ship  = get_post_meta($id, '_oferta_ship', true);
+            <?php
+            $id    = get_the_ID();
+            $url   = get_post_meta($id, '_oferta_url', true);
+            $price = get_post_meta($id, '_oferta_price', true);
+            $store = get_post_meta($id, '_oferta_store', true);
+            $badge = get_post_meta($id, '_oferta_badge', true);
+            $ship  = get_post_meta($id, '_oferta_ship', true);
 
-          $img = antenatec_oferta_img($id, $img_fallback);
-          ?>
+            $img = antenatec_oferta_img($id, $img_fallback);
+            ?>
 
-          <div class="col-6 col-md-4 col-lg-2">
-            <a class="product-card d-block text-decoration-none" href="<?php echo esc_url($url ?: get_permalink()); ?>" target="_blank" rel="nofollow noopener">
-              <div class="product-thumb" style="background-image:url('<?php echo esc_url($img); ?>');"></div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <a class="product-card d-block text-decoration-none" href="<?php echo esc_url($url ?: get_permalink()); ?>" target="_blank" rel="nofollow noopener">
+                <div class="product-thumb" style="background-image:url('<?php echo esc_url($img); ?>');"></div>
 
-              <div class="product-info">
-                <?php if ($badge) : ?>
-                  <div class="product-badge"><?php echo esc_html($badge); ?></div>
-                <?php endif; ?>
+                <div class="product-info">
+                  <?php if ($badge) : ?>
+                    <div class="product-badge"><?php echo esc_html($badge); ?></div>
+                  <?php endif; ?>
 
-                <div class="product-price">
-                  <?php echo esc_html($price ?: 'Ver oferta'); ?>
+                  <div class="product-price">
+                    <?php echo esc_html($price ?: 'Ver oferta'); ?>
+                  </div>
+
+                  <div class="product-sub small">
+                    <?php echo esc_html($ship ?: $store); ?>
+                  </div>
                 </div>
+              </a>
+            </div>
 
-                <div class="product-sub small">
-                  <?php echo esc_html($ship ?: $store); ?>
-                </div>
-              </div>
-            </a>
-          </div>
-
-        <?php endwhile; else: ?>
+          <?php endwhile;
+        else: ?>
           <div class="col-12">
             <p class="text-muted mb-0">Sem ofertas no momento.</p>
           </div>
-        <?php endif; wp_reset_postdata(); ?>
+        <?php endif;
+        wp_reset_postdata(); ?>
       </div>
     </div>
   </section>
 
-  <!-- PROMOÇÕES / GAMES / DESTAQUE -->
-  <section class="home-mix py-4">
-    <div class="container">
-      <div class="row g-4">
+  <!--  GAMES / DESTAQUE -->
+<section class="home-mix py-4">
+  <div class="container">
+    <div class="row g-4">
 
-        <div class="col-12 col-lg-3">
-          <h3 class="section-title m-0 mb-3">PROMOÇÕES</h3>
-          <div class="mini-list d-flex flex-column gap-2">
-            <?php for ($i = 0; $i < 4; $i++): ?>
-              <div class="mini-item d-flex gap-2 align-items-center">
-                <span class="mini-thumb" style="background-image:url('<?php echo esc_url($img_fallback); ?>');"></span>
-                <div>
-                  <div class="mini-title">Elden Ring</div>
-                  <div class="mini-price small">R$ 59,90</div>
-                </div>
-              </div>
-            <?php endfor; ?>
-          </div>
+      <!-- GAMES em cards -->
+      <div class="col-12 col-lg-6">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h3 class="section-title m-0">GAMES</h3>
         </div>
 
-        <div class="col-12 col-lg-3">
-          <h3 class="section-title m-0 mb-3">GAMES</h3>
-          <div class="mini-posts d-flex flex-column gap-2">
-            <?php
-            $games = new WP_Query([
-              'post_type'           => 'post',
-              'posts_per_page'      => 3,
-              'ignore_sticky_posts' => true,
-              'category_name'       => 'games',
-            ]);
-            ?>
-            <?php if ($games->have_posts()) : while ($games->have_posts()) : $games->the_post(); ?>
-              <a class="game-item d-flex gap-2 text-decoration-none" href="<?php the_permalink(); ?>">
-                <span class="badge bg-primary">GUIA</span>
-                <span class="game-title"><?php the_title(); ?></span>
-              </a>
-            <?php endwhile; endif; wp_reset_postdata(); ?>
-          </div>
-        </div>
+        <?php
+        $games = new WP_Query([
+          'post_type'           => 'post',
+          'posts_per_page'      => 3,
+          'ignore_sticky_posts' => true,
+          'category_name'       => 'games',
+          'post_status'         => 'publish',
+          'orderby'             => 'date',
+          'order'               => 'DESC',
+        ]);
+        ?>
 
-        <div class="col-12 col-lg-6">
-          <?php
-          $featured = new WP_Query([
-            'post_type'           => 'post',
-            'posts_per_page'      => 1,
-            'ignore_sticky_posts' => true,
-            'offset'              => 10,
-          ]);
-          ?>
-          <?php if ($featured->have_posts()) : $featured->the_post(); ?>
-            <?php $fimg = $antenatec_get_img(get_the_ID(), 'large'); ?>
-            <a class="feature-wide d-block text-decoration-none" href="<?php the_permalink(); ?>">
-              <div class="feature-wide-media" style="background-image:url('<?php echo esc_url($fimg); ?>');">
-                <div class="feature-wide-overlay">
-                  <div class="small"><?php echo esc_html($antenatec_date_time()); ?></div>
-                  <h3 class="feature-wide-title"><?php the_title(); ?></h3>
+        <div class="games-cards d-flex flex-column gap-3">
+          <?php if ($games->have_posts()) : while ($games->have_posts()) : $games->the_post(); ?>
+            <?php $gimg = $antenatec_get_img(get_the_ID(), 'medium'); ?>
+
+            <a class="game-card d-flex text-decoration-none" href="<?php the_permalink(); ?>">
+              <div class="game-card-thumb" style="background-image:url('<?php echo esc_url($gimg); ?>');"></div>
+
+              <div class="game-card-body">
+                <div class="game-card-meta">
+                  <span class="badge bg-primary">GAMES</span>
+                  <span class="game-card-date"><?php echo esc_html($antenatec_date_time()); ?></span>
                 </div>
+
+                <h4 class="game-card-title"><?php the_title(); ?></h4>
+
+                <p class="game-card-excerpt">
+                  <?php echo esc_html($antenatec_excerpt(get_the_ID(), 16)); ?>
+                </p>
               </div>
             </a>
-          <?php endif; wp_reset_postdata(); ?>
-        </div>
 
+          <?php endwhile; endif; wp_reset_postdata(); ?>
+        </div>
       </div>
+
+      <!-- Destaque -->
+      <div class="col-12 col-lg-6">
+        <?php
+        $featured = new WP_Query([
+          'post_type'           => 'post',
+          'posts_per_page'      => 1,
+          'ignore_sticky_posts' => true,
+          'offset'              => 10,
+          'post_status'         => 'publish',
+        ]);
+        ?>
+
+        <?php if ($featured->have_posts()) : $featured->the_post(); ?>
+          <?php $fimg = $antenatec_get_img(get_the_ID(), 'large'); ?>
+
+          <a class="feature-wide d-block text-decoration-none" href="<?php the_permalink(); ?>">
+            <div class="feature-wide-media" style="background-image:url('<?php echo esc_url($fimg); ?>');">
+              <div class="feature-wide-overlay">
+                <div class="small"><?php echo esc_html($antenatec_date_time()); ?></div>
+                <h3 class="feature-wide-title"><?php the_title(); ?></h3>
+              </div>
+            </div>
+          </a>
+        <?php endif; wp_reset_postdata(); ?>
+      </div>
+
     </div>
-  </section>
+  </div>
+</section>
 
   <!-- REVIEWS -->
   <section class="home-reviews py-4">
@@ -406,18 +444,20 @@ if (!$hero_main->have_posts()) {
 
       <div class="row g-3">
         <?php if ($reviews->have_posts()) : while ($reviews->have_posts()) : $reviews->the_post(); ?>
-          <?php $rimg = $antenatec_get_img(get_the_ID(), 'large'); ?>
-          <div class="col-6 col-lg-3">
-            <a class="review-card d-block text-decoration-none" href="<?php the_permalink(); ?>">
-              <div class="review-media" style="background-image:url('<?php echo esc_url($rimg); ?>');">
-                <div class="review-overlay">
-                  <span class="badge bg-primary">REVIEW</span>
-                  <div class="review-title"><?php the_title(); ?></div>
+            <?php $rimg = $antenatec_get_img(get_the_ID(), 'large'); ?>
+            <div class="col-6 col-lg-3">
+              <a class="review-card d-block text-decoration-none" href="<?php the_permalink(); ?>">
+                <div class="review-media" style="background-image:url('<?php echo esc_url($rimg); ?>');">
+                  <div class="review-overlay">
+                    <span class="badge bg-primary">REVIEW</span>
+                    <div class="review-title"><?php the_title(); ?></div>
+                  </div>
                 </div>
-              </div>
-            </a>
-          </div>
-        <?php endwhile; endif; wp_reset_postdata(); ?>
+              </a>
+            </div>
+        <?php endwhile;
+        endif;
+        wp_reset_postdata(); ?>
       </div>
     </div>
   </section>
@@ -441,12 +481,14 @@ if (!$hero_main->have_posts()) {
 
           <div class="news-list d-flex flex-column gap-3">
             <?php if ($news_list->have_posts()) : while ($news_list->have_posts()) : $news_list->the_post(); ?>
-              <a class="news-item d-flex gap-3 text-decoration-none" href="<?php the_permalink(); ?>">
-                <?php $nimg = $antenatec_get_img(get_the_ID(), 'thumbnail'); ?>
-                <span class="news-thumb" style="background-image:url('<?php echo esc_url($nimg); ?>');"></span>
-                <span class="news-title text-white"><?php the_title(); ?></span>
-              </a>
-            <?php endwhile; endif; wp_reset_postdata(); ?>
+                <a class="news-item d-flex gap-3 text-decoration-none" href="<?php the_permalink(); ?>">
+                  <?php $nimg = $antenatec_get_img(get_the_ID(), 'thumbnail'); ?>
+                  <span class="news-thumb" style="background-image:url('<?php echo esc_url($nimg); ?>');"></span>
+                  <span class="news-title text-white"><?php the_title(); ?></span>
+                </a>
+            <?php endwhile;
+            endif;
+            wp_reset_postdata(); ?>
           </div>
         </div>
 
@@ -469,7 +511,8 @@ if (!$hero_main->have_posts()) {
                 </div>
               </div>
             </a>
-          <?php endif; wp_reset_postdata(); ?>
+          <?php endif;
+          wp_reset_postdata(); ?>
         </div>
 
       </div>
@@ -498,12 +541,14 @@ if (!$hero_main->have_posts()) {
             ?>
             <div class="trending-list d-flex flex-column gap-2">
               <?php if ($trending2->have_posts()) : while ($trending2->have_posts()) : $trending2->the_post(); ?>
-                <?php $t2img = $antenatec_get_img(get_the_ID(), 'thumbnail'); ?>
-                <a class="trending-item d-flex gap-2 text-decoration-none" href="<?php the_permalink(); ?>">
-                  <span class="trending-thumb" style="background-image:url('<?php echo esc_url($t2img); ?>');"></span>
-                  <span class="trending-title"><?php the_title(); ?></span>
-                </a>
-              <?php endwhile; endif; wp_reset_postdata(); ?>
+                  <?php $t2img = $antenatec_get_img(get_the_ID(), 'thumbnail'); ?>
+                  <a class="trending-item d-flex gap-2 text-decoration-none" href="<?php the_permalink(); ?>">
+                    <span class="trending-thumb" style="background-image:url('<?php echo esc_url($t2img); ?>');"></span>
+                    <span class="trending-title"><?php the_title(); ?></span>
+                  </a>
+              <?php endwhile;
+              endif;
+              wp_reset_postdata(); ?>
             </div>
           </div>
         </aside>
@@ -524,17 +569,19 @@ if (!$hero_main->have_posts()) {
 
           <div class="row g-3">
             <?php if ($daily->have_posts()) : while ($daily->have_posts()) : $daily->the_post(); ?>
-              <?php $dimg = $antenatec_get_img(get_the_ID(), 'large'); ?>
-              <div class="col-12 col-md-6">
-                <article class="daily-card d-flex gap-3">
-                  <a class="daily-thumb" href="<?php the_permalink(); ?>" style="background-image:url('<?php echo esc_url($dimg); ?>');"></a>
-                  <div class="daily-content">
-                    <h4 class="daily-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h4>
-                    <div class="daily-meta small"><?php echo esc_html($antenatec_date_time()); ?></div>
-                  </div>
-                </article>
-              </div>
-            <?php endwhile; endif; wp_reset_postdata(); ?>
+                <?php $dimg = $antenatec_get_img(get_the_ID(), 'large'); ?>
+                <div class="col-12 col-md-6">
+                  <article class="daily-card d-flex gap-3">
+                    <a class="daily-thumb" href="<?php the_permalink(); ?>" style="background-image:url('<?php echo esc_url($dimg); ?>');"></a>
+                    <div class="daily-content">
+                      <h4 class="daily-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h4>
+                      <div class="daily-meta small"><?php echo esc_html($antenatec_date_time()); ?></div>
+                    </div>
+                  </article>
+                </div>
+            <?php endwhile;
+            endif;
+            wp_reset_postdata(); ?>
           </div>
 
           <div class="pt-4">
