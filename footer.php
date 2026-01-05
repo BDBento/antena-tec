@@ -38,8 +38,26 @@
       <div class="col-6 col-lg-3">
         <h6 class="footer-title">Contato</h6>
         <ul class="footer-contact list-unstyled">
-          <li>Email: contato@antenatec.com.br</li>
-          <li>Brasil</li>
+          <li>
+            📧 <a href="mailto:contato@antenatec.com.br" class="text-light text-decoration-none">
+              contato@antenatec.com.br
+            </a>
+          </li>
+
+          <li class="mt-2">
+            📞 <a href="tel:+5567993108021" class="text-light text-decoration-none">
+              (67) 99310-8021
+            </a>
+          </li>
+
+          <li class="mt-1">
+            💬 <a href="https://wa.me/5567993108021" target="_blank" rel="noopener"
+                 class="text-light text-decoration-none">
+              WhatsApp
+            </a>
+          </li>
+
+          <li class="mt-2">📍 Brasil</li>
         </ul>
       </div>
 

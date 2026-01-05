@@ -483,3 +483,33 @@ function antenatec_oferta_img($post_id, $fallback_url) {
   }
   return $fallback_url;
 }
+
+/**
+ * Remove placeholder inválido do termo de busca: {search_term_string}
+ * Evita aparecer no título/H1/campos e impede comportamento estranho de plugins.
+ */
+add_filter('request', function ($qv) {
+	if (!isset($qv['s'])) return $qv;
+
+	$s = (string) $qv['s'];
+
+	// pega variações comuns
+	if ($s === '{search_term_string}' || stripos($s, '{search_term_string}') !== false) {
+		$qv['s'] = '';
+	}
+
+	return $qv;
+}, 1);
+
+/**
+ * (Opcional) Redireciona URL “placeholder” para a home (ou para /?s=)
+ */
+add_action('template_redirect', function () {
+	if (!is_search()) return;
+
+	$s = (string) get_query_var('s');
+	if ($s === '{search_term_string}' || stripos($s, '{search_term_string}') !== false) {
+		wp_safe_redirect(home_url('/'), 301); // ou home_url('/?s=')
+		exit;
+	}
+}, 1);
