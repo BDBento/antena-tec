@@ -513,3 +513,6 @@ add_action('template_redirect', function () {
 		exit;
 	}
 }, 1);
+
+
+add_theme_support('title-tag');
